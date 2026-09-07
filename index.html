@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>北邮人工智能学院10班 · 日程</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+</head>
+<body>
+  <!-- ============ 顶部班级信息 ============ -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="badge" id="headerBadge" title="班级班徽">10</div>
+      <div class="brand-text">
+        <h1 class="school" id="schoolName">北京邮电大学 · 人工智能学院</h1>
+        <div class="class-row">
+          <span class="class-name" id="className">人工智能学院 <b>10</b> 班</span>
+          <span class="motto" id="classMotto">厚德 / 博学 / 敬业 / 乐群</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="online"><span class="dot"></span> 在线 <b id="onlineCount">0</b></span>
+      <button class="btn btn-ghost" id="themeBtn" title="切换主题">🌙</button>
+      <button class="btn btn-primary" id="committeeBtn">班委入口</button>
+    </div>
+  </header>
+
+  <!-- ============ 同步状态条 ============ -->
+  <div class="sync-bar" id="syncBar">
+    <span class="sync-status" id="syncStatus">● 实时同步已连接</span>
+    <span class="sync-sub">最后更新于 <span id="lastUpdated">--</span></span>
+    <button class="sync-refresh" id="refreshBtn">立即刷新 ⟳</button>
+  </div>
+
+  <!-- ============ 主体 ============ -->
+  <main class="layout">
+    <div class="content">
+      <!-- 视图切换 -->
+      <div class="view-tabs" id="viewTabs">
+        <button class="tab active" data-view="countdown">⏳ 倒计时卡片</button>
+        <button class="tab" data-view="calendar">📅 日历</button>
+        <button class="tab" data-view="timeline">🕘 时间轴</button>
+        <span class="view-hint">三种视图共用同一份数据，切换不重新加载</span>
+      </div>
+
+      <!-- 日程统计 -->
+      <div class="stat-row">
+        <span class="stat chip-s">进行中 <b id="statActive">0</b></span>
+        <span class="stat chip-d">已完成 <b id="statDone">0</b></span>
+      </div>
+
+      <section id="view-countdown" class="view active">
+        <div class="toolbar">
+          <div class="filters" id="catFilter">
+            <button class="fchip active" data-cat="全部">全部</button>
+            <button class="fchip" data-cat="考试">考试</button>
+            <button class="fchip" data-cat="作业">作业</button>
+            <button class="fchip" data-cat="活动">活动</button>
+            <button class="fchip" data-cat="会议">会议</button>
+            <button class="fchip" data-cat="其他">其他</button>
+          </div>
+          <input type="text" class="search" id="searchBox" placeholder="搜索日程、地点或备注">
+        </div>
+        <div id="countdownList" class="card-list"></div>
+        <div class="empty" id="countdownEmpty">当前没有进行中的安排。学习委员录入后，这里会自动出现倒计时卡片；也可以切到「已结束」查看历史安排。</div>
+      </section>
+
+      <section id="view-calendar" class="view">
+        <div class="cal-head">
+          <button class="btn btn-ghost" id="prevMonth">‹ 上一月</button>
+          <h2 id="calTitle">本月</h2>
+          <button class="btn btn-ghost" id="nextMonth">下一月 ›</button>
+        </div>
+        <div class="cal-week">
+          <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+        </div>
+        <div id="calGrid" class="cal-grid"></div>
+        <div id="calDetail" class="cal-detail"></div>
+      </section>
+
+      <section id="view-timeline" class="view">
+        <div id="timelineList" class="timeline"></div>
+        <div class="empty" id="timelineEmpty">还没有已结束的安排。过期或被标记完成的日程会收纳到这里，不会丢失。</div>
+      </section>
+    </div>
+
+    <!-- 右侧栏 -->
+    <aside class="sidebar">
+      <button class="btn btn-primary" id="addScheduleBtn">＋ 我要修改 / 录入</button>
+
+      <div class="side-card">
+        <h3>💡 提建议</h3>
+        <input type="text" class="side-input" id="sugText" placeholder="建议加一条日程，如：9月10日19:00 四六级报名提醒">
+        <div class="side-inputs">
+          <input type="text" id="sugCat" placeholder="类别（可选）">
+          <input type="time" id="sugTime" placeholder="时间">
+        </div>
+        <label class="check-row"><input type="checkbox" id="sugDirect"> 较为重要（跳过审核，直接加入全班日程）</label>
+        <button class="btn btn-primary btn-block" id="sugSubmit">提交建议</button>
+      </div>
+
+      <div class="side-card">
+        <div class="side-card-head">
+          <h3>🔗 网址链接</h3>
+          <button class="btn btn-ghost btn-sm" id="addLinkOpen">添加链接</button>
+        </div>
+        <div id="linkList" class="link-list"></div>
+      </div>
+
+      <div class="side-card">
+        <h3>🏅 班徽轮换 <small>每 7 天一轮</small></h3>
+        <div class="badge-show" id="topicBadge">10</div>
+        <div class="badge-meta">本周班徽 · 距下次轮换 <b id="daysToRotate">--</b> 天</div>
+        <button class="btn btn-ghost btn-block" id="uploadBadgeOpen">上传班徽</button>
+        <div id="badgeCandidates" class="badge-candidates"></div>
+      </div>
+
+      <div class="side-card">
+        <h3>📖 用法教程</h3>
+        <p class="muted" id="tutorialPreview">第一次用？花一分钟看完这七块，全班功能都会了。</p>
+        <button class="btn btn-ghost btn-block" id="tutorialBtn">打开教程</button>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ============ 编辑弹窗 ============ -->
+  <div class="modal-dim" id="editModal" hidden>
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="editTitle">修改日程</h2>
+        <button class="modal-x" data-close="editModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>项目名称<input id="f-title" placeholder="如：完成机器学习实验"></label>
+        <div class="field-row">
+          <label>截止时间<input type="datetime-local" id="f-due"></label>
+          <label>类别
+            <select id="f-cat">
+              <option>考试</option><option>作业</option><option>活动</option><option>会议</option><option>其他</option>
+            </select>
+          </label>
+        </div>
+        <div class="field-row">
+          <label>地点<input id="f-loc" placeholder="如：北楼 206"></label>
+          <label>状态
+            <select id="f-status">
+              <option value="active">进行中</option>
+              <option value="done">已完成</option>
+            </select>
+          </label>
+        </div>
+        <label>备注<textarea id="f-note" placeholder="补充要求、范围、携带物品等"></textarea></label>
+        <label class="check-row"><input type="checkbox" id="f-pin"> 置顶这条日程</label>
+        <div class="edit-meta" id="editMeta"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" data-close="editModal">返回继续编辑</button>
+        <button class="btn btn-primary" id="saveScheduleBtn">保存修改</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 留言弹窗 ============ -->
+  <div class="modal-dim" id="commentModal" hidden>
+    <div class="modal">
+      <div class="modal-head">
+        <h2>留言区</h2>
+        <button class="modal-x" data-close="commentModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="commentRegion" class="comment-region"></div>
+        <input type="text" class="side-input" id="commentName" placeholder="你的姓名（留空则匿名）">
+        <input type="text" class="side-input" id="commentText" placeholder="留一句言，如：记得带学生证 / 这周改到周五了">
+        <button class="btn btn-primary btn-block" id="commentSubmit">发布留言</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 建议成功/班委等弹窗 ============ -->
+  <div class="modal-dim" id="nameModal" hidden>
+    <div class="modal modal-sm">
+      <div class="modal-head"><h2>先留个名字</h2><button class="modal-x" data-close="nameModal">✕</button></div>
+      <div class="modal-body">
+        <p class="muted">全班共同维护这份日程，修改会记录你的名字，方便大家知道是谁改的。</p>
+        <label>你的姓名<input id="nameInput" placeholder="如：陈嘉禾"></label>
+      </div>
+      <div class="modal-foot"><button class="btn btn-primary" id="nameOk">确定</button></div>
+    </div>
+  </div>
+
+  <!-- ============ 提建议弹窗 ============ -->
+  <div class="modal-dim" id="conflictModal" hidden>
+    <div class="modal">
+      <div class="modal-head"><h2>版本冲突</h2><button class="modal-x" data-close="conflictModal">✕</button></div>
+      <div class="modal-body">
+        <p class="muted">有人也在改这条日程，请选择保留哪个版本。</p>
+        <div class="conflict-split">
+          <div class="conflict-col"><h4>我的修改</h4><div id="conflictMine"></div><button class="btn btn-primary btn-block" id="conflictKeepMine">保留这个</button></div>
+          <div class="conflict-col"><h4>对方的版本</h4><div id="conflictTheirs"></div><button class="btn btn-primary btn-block" id="conflictKeepTheirs">保留这个</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 添加链接弹窗 ============ -->
+  <div class="modal-dim" id="linkModal" hidden>
+    <div class="modal modal-sm">
+      <div class="modal-head"><h2>添加链接</h2><button class="modal-x" data-close="linkModal">✕</button></div>
+      <div class="modal-body">
+        <label>名称，如 北邮教务系统<input id="lk-name" placeholder="给链接起个名字"></label>
+        <label>网址，如 jw.bupt.edu.cn<input id="lk-url" placeholder="网址（可省略 https://）"></label>
+        <label>分类标签<input id="lk-tag" placeholder="分类标签"></label>
+        <label>说明（可选）<input id="lk-desc" placeholder="说明"></label>
+      </div>
+      <div class="modal-foot"><button class="btn btn-primary" id="linkSave">添加并同步</button></div>
+    </div>
+  </div>
+
+  <!-- ============ 上传班徽弹窗 ============ -->
+  <div class="modal-dim" id="badgeModal" hidden>
+    <div class="modal modal-sm">
+      <div class="modal-head"><h2>上传班徽候选</h2><button class="modal-x" data-close="badgeModal">✕</button></div>
+      <div class="modal-body">
+        <p class="muted">班徽仅支持 PNG / JPG / WEBP / GIF，图片请控制在 3MB 以内。加入候选后轮流展示。</p>
+        <input type="file" id="badgeFile" accept="image/png,image/jpeg,image/webp,image/gif">
+        <div id="badgePreviewWrap" hidden><img id="badgePreview" class="badge-preview"></div>
+      </div>
+      <div class="modal-foot"><button class="btn btn-primary" id="badgeSave">上传班徽</button></div>
+    </div>
+  </div>
+
+  <!-- ============ 班委后台弹窗 ============ -->
+  <div class="modal-dim" id="committeeModal" hidden>
+    <div class="modal modal-lg">
+      <div class="modal-head"><h2>班委后台</h2><button class="modal-x" data-close="committeeModal">✕</button></div>
+      <div class="committee-tabs" id="committeeTabs">
+        <button class="ctab active" data-ctab="record">录入</button>
+        <button class="ctab" data-ctab="manage">管理</button>
+        <button class="ctab" data-ctab="suggest">建议</button>
+        <button class="ctab" data-ctab="link">链接</button>
+        <button class="ctab" data-ctab="log">变更日志</button>
+        <button class="ctab" data-ctab="settings">班级信息</button>
+      </div>
+      <div class="modal-body" id="committeeBody"></div>
+    </div>
+  </div>
+
+  <!-- ============ 口令弹窗 ============ -->
+  <div class="modal-dim" id="passModal" hidden>
+    <div class="modal modal-sm">
+      <div class="modal-head"><h2>班委口令</h2><button class="modal-x" data-close="passModal">✕</button></div>
+      <div class="modal-body">
+        <p class="muted">输入班级口令进入班委后台。</p>
+        <input type="password" id="passInput" placeholder="请输入班委口令">
+      </div>
+      <div class="modal-foot"><button class="btn btn-primary" id="passOk">进入后台</button></div>
+    </div>
+  </div>
+
+  <!-- ============ 教程弹窗 ============ -->
+  <div class="modal-dim" id="tutorialModal" hidden>
+    <div class="modal modal-lg">
+      <div class="modal-head"><h2>用法教程</h2><button class="modal-x" data-close="tutorialModal">✕</button></div>
+      <div class="modal-body tutorial-body" id="tutorialBody"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div id="editPrompt" class="modal-dim" hidden><div class="modal modal-sm"><div class="modal-body"><p id="editPromptMsg"></p><input id="editPromptInput" type="text" placeholder="填个值"><div class="modal-foot"><button class="btn btn-primary" id="editPromptOk">确定</button></div></div></div></div>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>
