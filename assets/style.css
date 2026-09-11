@@ -77,8 +77,12 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); o
 .motto { font-size: 12px; opacity: .85; letter-spacing: 1px; }
 .header-actions { display: flex; align-items: center; gap: 12px; }
 .online { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; background: rgba(255,255,255,.15); padding: 5px 12px; border-radius: 999px; }
-.online .dot { width: 8px; height: 8px; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 3px rgba(52,211,153,.3); }
-.online b { color: #ffd54a; }
+.online .dot { width: 8px; height: 8px; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 3px rgba(52,211,153,.3); animation: onlineBlink 2.4s ease-in-out infinite; }
+.online b { color: #ffd54a; display: inline-block; min-width: 1.4em; text-align: center; }
+.online b.tick { animation: onlinePop .5s ease; }
+@keyframes onlineBlink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.82); } }
+@keyframes onlinePop { 0% { transform: scale(1); } 35% { transform: scale(1.35); color: #7dffb0; } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .online .dot, .online b.tick { animation: none; } }
 #themeBtn { background: rgba(255,255,255,.15); border: none; color: #fff; font-size: 16px; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
 #committeeBtn { background: #fff; color: var(--brand); }
 #committeeBtn:hover { filter: brightness(.96); }
