@@ -147,7 +147,8 @@
     const m = full.match(/^(.*?)(\d+)\s*班$/);
     if (m) { $('#className').innerHTML = esc(m[1].trim()) + '<b>' + esc(m[2]) + '</b> 班'; }
     else { $('#className').textContent = full; }
-    $('#onlineCount').textContent = state.meta.online;
+    if (!onlineLive) onlineLive = onlineSeed();
+    $('#onlineCount').textContent = onlineLive;
     if (state.meta.badge && !state.meta.badge.startsWith('10')) {
       $('#headerBadge').innerHTML = `<img src="${esc(state.meta.badge)}">`;
     } else {
@@ -687,7 +688,7 @@
   function committeeSettings() {
     const s = state.meta;
     return `<label>班级口号<input id="set-motto" value="${esc(s.motto)}"></label>
-      <label>班级人数<input id="set-online" type="number" value="${esc(s.online)}"></label>
+      <label>班级人数（在线人数上限）<input id="set-online" type="number" value="${esc(s.online)}"></label>
       <label>班委口令<input id="set-password" value="${esc(s.password)}"></label>
       <label>学校 · 学院<input id="set-school" value="${esc(s.school)}"></label>
       <label>班级<input id="set-class" value="${esc(s.className)}"></label>
@@ -748,6 +749,7 @@
     if ($$('#committeeTabs .ctab.active')[0]?.dataset.ctab === 'settings') {
       const saveBtn = $('#settingsSave'); if (saveBtn) saveBtn.addEventListener('click', () => {
         state.meta.motto = $('#set-motto').value; state.meta.online = Number($('#set-online').value) || 0;
+        onlineLive = state.meta.online; updateOnlineDisplay();
         state.meta.password = $('#set-password').value; state.meta.school = $('#set-school').value;
         state.meta.className = $('#set-class').value;
         log('修改班级设置', '');
@@ -815,6 +817,39 @@
     applyTheme(cur === 'dark' ? 'light' : 'dark');
   }
 
+  // ---------------- 实时在线人数 ----------------
+  let onlineLive = 0;
+  let onlineTimer = null;
+  function onlineSeed() { const b = state.meta.online || 37; return Math.max(1, Math.round(b * 0.82)); }
+  function tickOnline() {
+    const base = state.meta.online || 37;
+    if (!onlineLive) onlineLive = onlineSeed();
+    const min = Math.max(1, Math.round(base * 0.5));
+    const max = base;
+    const target = onlineSeed();
+    // 多数小幅波动，偶尔一次明显进出
+    let delta = Math.floor(Math.random() * 3) - 1;               // -1 / 0 / +1
+    if (Math.random() < 0.22) delta = (Math.random() < 0.5 ? -1 : 1) * (2 + Math.floor(Math.random() * 3));
+    // 轻微向目标值回归，避免长期单向漂移
+    if (onlineLive < target) delta += 1; else if (onlineLive > target) delta -= 1;
+    let next = onlineLive + delta;
+    if (next === onlineLive) next = onlineLive + (Math.random() < 0.5 ? -1 : 1);
+    next = Math.max(min, Math.min(max, next));
+    onlineLive = next;
+    updateOnlineDisplay();
+  }
+  function updateOnlineDisplay() {
+    const el = $('#onlineCount');
+    if (!el) return;
+    el.textContent = onlineLive;
+    el.classList.remove('tick'); void el.offsetWidth; el.classList.add('tick');
+  }
+  function startOnlineLoop() {
+    clearTimeout(onlineTimer);
+    const step = () => { tickOnline(); onlineTimer = setTimeout(step, 2500 + Math.random() * 3500); };
+    onlineTimer = setTimeout(step, 1500);
+  }
+
   // ---------------- 同步模拟 ----------------
   let syncTimer = null;
   function startSyncLoop() {
@@ -823,6 +858,7 @@
     $('#syncBar').querySelector('.sync-sub').style.display = '';
     setLastUpdated();
     clearInterval(syncTimer);
+    startOnlineLoop();
     syncTimer = setInterval(() => {
       // 模拟其他设备改动：偶尔出现一条“有人修改”
       if (Math.random() < 0.06) {
