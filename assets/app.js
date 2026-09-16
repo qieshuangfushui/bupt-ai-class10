@@ -85,6 +85,9 @@
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
+  function icon(name, label) {
+    return `<svg class="ui-icon" viewBox="0 0 24 24"${label ? ` role="img" aria-label="${esc(label)}"` : ' aria-hidden="true"'}><use href="#icon-${name}"></use></svg>`;
+  }
   function toast(msg) {
     const t = $('#toast'); t.textContent = msg; t.classList.add('show');
     clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.remove('show'), 2200);
@@ -202,28 +205,28 @@
       <div class="card ${pin} ${urgent ? 'urgent' : ''}" data-id="${s.id}">
         <div class="card-top">
           <div class="card-title">${esc(s.title)}
-            ${s.pinned ? ' <span title="已置顶">📌</span>' : ''}
+            ${s.pinned ? ` <span class="pin-mark" title="已置顶">${icon('pin', '已置顶')}</span>` : ''}
           </div>
           <span class="cat-tag ${catClass(s.cat)}">${esc(s.cat)}</span>
         </div>
         <div class="countdown-box">
           ${s.status === 'active'
-            ? (r.expired ? '⚠️ <b style="color:var(--urgent)">前已截止</b>' : `<b>${esc(r.text)}</b> ${danger ? '· 即将截止' : ''} 剩余`)
-            : '✅ 已完成'}
+            ? (r.expired ? `${icon('alert', '已截止')} <b class="expired">已截止</b>` : `<b>${esc(r.text)}</b> ${danger ? '· 即将截止' : ''} 剩余`)
+            : `${icon('check', '已完成')} 已完成`}
         </div>
         <div class="card-meta">
-          ${s.due ? `<span class="field">🗓 ${esc(fmtDue(s.due))}</span>` : ''}
-          ${s.loc ? `<span class="field">📍 ${esc(s.loc)}</span>` : ''}
-          <span class="field">👤 ${esc(s.createdBy || '班委')}</span>
+          ${s.due ? `<span class="field">${icon('calendar')} ${esc(fmtDue(s.due))}</span>` : ''}
+          ${s.loc ? `<span class="field">${icon('map-pin')} ${esc(s.loc)}</span>` : ''}
+          <span class="field">${icon('user')} ${esc(s.createdBy || '班委')}</span>
         </div>
-        ${s.note ? `<div class="card-meta"><span class="field">📝 ${esc(s.note)}</span></div>` : ''}
+        ${s.note ? `<div class="card-meta"><span class="field">${icon('note')} ${esc(s.note)}</span></div>` : ''}
         ${s.status === 'active' ? `
         <div class="checked-row">打卡 <b>${checkedN}</b> 人 · 由 <b>${esc(s.createdBy || '班委')}</b> 更新 · 最后修改 ${esc(s.lastMod || '')}</div>
         ` : ''}
         <div class="card-actions">
           <button class="mini-btn" data-act="open">打开 / 修改</button>
           ${s.status === 'active' ? `<button class="mini-btn ${checkedN ? 'done' : ''}" data-act="check">${checkedN ? '取消打卡' : '打卡完成'}</button>` : ''}
-          ${s.status === 'active' ? `<button class="mini-btn" data-act="comment">💬 留言（${(state.comments[s.id] || []).length}）</button>` : ''}
+          ${s.status === 'active' ? `<button class="mini-btn" data-act="comment">${icon('comment')} 留言（${(state.comments[s.id] || []).length}）</button>` : ''}
           ${s.status === 'done' ? `<button class="mini-btn" data-act="reopen">恢复进行中</button>` : ''}
         </div>
       </div>`;
@@ -403,7 +406,7 @@
     m.dataset.id = editingId;
   }
   function conflictHTML(d) {
-    return `<p><b>${esc(d.title)}</b><br>📅 ${esc(fmtDateTime(d.due))} · 🏷 ${esc(d.cat)}${d.loc ? ' · 📍 ' + esc(d.loc) : ''}<br>📝 ${esc(d.note || '—')}<br>状态：${d.status === 'active' ? '进行中' : '已完成'}</p>`;
+    return `<p><b>${esc(d.title)}</b><br>${icon('calendar')} ${esc(fmtDateTime(d.due))} · ${icon('tag')} ${esc(d.cat)}${d.loc ? ' · ' + icon('map-pin') + ' ' + esc(d.loc) : ''}<br>${icon('note')} ${esc(d.note || '—')}<br>状态：${d.status === 'active' ? '进行中' : '已完成'}</p>`;
   }
   function fieldsOf(s) {
     return { title: s.title, due: s.due, cat: s.cat, loc: s.loc, note: s.note, status: s.status, pinned: s.pinned };
@@ -506,7 +509,7 @@
     if (!list.length) { wrap.innerHTML = '<div class="empty-sm">还没有链接，点右上「添加链接」写下第一个。</div>'; return; }
     wrap.innerHTML = list.map(l => `
       <div class="link-item">
-        <span class="link-ico">🔗</span>
+        <span class="link-ico">${icon('link', '链接')}</span>
         <div>
           <div class="link-name"><a href="https://${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name)}</a></div>
           <div class="link-tag">${esc(l.tag || '')}${l.desc ? ' · ' + esc(l.desc) : ''}</div>
@@ -560,7 +563,7 @@
       wrap.innerHTML = '<div class="empty-sm">还没有班徽候选。上传第一张，它会立即成为本周班徽展示在顶部。</div>';
       return;
     }
-    let html = '<div class="badge-mini" style="border:none;font-weight:600">🏅 全部候选（' + list.length + '）</div>';
+    let html = '<div class="badge-mini badge-total">' + icon('award', '班徽候选') + ' 全部候选（' + list.length + '）</div>';
     list.forEach((b, i) => {
       html += `<div class="badge-mini">
         ${b.data ? `<img src="${esc(b.data)}">` : `<span>${esc(b.text)}</span>`}
@@ -641,7 +644,7 @@
     return `<p class="muted">共 ${list.length} 条日程。可置顶、标记完成、删除与回收站恢复、逾期顺延。</p>
       <div id="manage-list">${list.map(s => `
         <div class="crow" data-id="${s.id}">
-          <h4>${s.pinned ? '📌' : ''} ${esc(s.title)} <span class="cat-tag ${catClass(s.cat)}">${esc(s.cat)}</span></h4>
+          <h4>${s.pinned ? icon('pin', '已置顶') : ''} ${esc(s.title)} <span class="cat-tag ${catClass(s.cat)}">${esc(s.cat)}</span></h4>
           <div class="muted">截止 ${esc(fmtDateTime(s.due))} · ${s.status === 'active' ? '进行中' : '已完成'} · 修改人 ${esc(s.lastMod || '—')}</div>
           <div class="cops">
             <button class="mini-btn" data-cmd="togglepin">${s.pinned ? '取消置顶' : '置顶'}</button>
@@ -672,7 +675,7 @@
     return `<div class="ctoolbar"><button class="btn btn-primary" id="addLinkIn">＋ 添加链接</button></div>
       <div id="manage-links">${state.links.map(l => `
         <div class="crow" data-id="${l.id}">
-          <h4>🔗 ${esc(l.name)} <span class="muted">${esc(l.url)}</span></h4>
+          <h4>${icon('link')} ${esc(l.name)} <span class="muted">${esc(l.url)}</span></h4>
           <div class="muted">${esc(l.tag || '')}${l.desc ? ' · ' + esc(l.desc) : ''}</div>
           <div class="cops"><button class="mini-btn" data-cmd="editLink">编辑</button><button class="mini-btn danger" data-cmd="delLink">删除</button></div>
         </div>`).join('')}
@@ -783,23 +786,23 @@
   function openTutorial() {
     const body = $('#tutorialBody');
     body.innerHTML = `
-      <h3>⛳ 三种视图切换</h3>
+      <h3>三种视图切换</h3>
       <p>倒计时卡片：按剩余时间排序，临期会自动变红并脉冲提醒。日历：按月看每天有哪些安排，点日期展开当天条目。时间轴：按天分组的流水视图，已结束的安排收在折叠区。三种视图共用同一份数据，切换不重新加载。</p>
-      <h3>✏️ 日程编辑</h3>
+      <h3>日程编辑</h3>
       <p>点任意日程卡片或「我要修改」按钮打开编辑弹窗。可改项目、截止时间、类别、地点、备注、状态、置顶。保存后全班实时同步，变更日志记录改前改后。两人同时改同一字段时弹出左右对比，选一个保留，不会互相覆盖。</p>
-      <h3>💬 弹窗留言区</h3>
+      <h3>弹窗留言区</h3>
       <p>弹窗底部是这条日程的留言区，留一句提醒或疑问全班可见。</p>
-      <h3>✅ 打卡</h3>
+      <h3>打卡</h3>
       <p>打开日程弹窗点「我已完成」即打卡，再点一次取消。卡片上实时显示全班打卡人数。打卡记录你的名字，方便班委统计完成情况。</p>
-      <h3>💡 提建议</h3>
+      <h3>提建议</h3>
       <p>首页右侧「提建议」写下想加的安排，可带截止时间和类别。普通建议进入班委后台，由班委加入日程、采纳或忽略。勾选「较为重要」则跳过审核，直接加入全班日程——紧急添加会记入变更日志。</p>
-      <h3>🔗 网址链接</h3>
+      <h3>网址链接</h3>
       <p>首页右侧「网址链接」是班委维护的常用入口。课程平台、资料库、通知页点一下在新标签页打开。全班都能在首页添加、编辑、删除，班委后台同样可维护。</p>
-      <h3>🏅 班徽轮换</h3>
+      <h3>班徽轮换</h3>
       <p>每 7 天轮换一张班徽候选。上传一张立即成为本周班徽展示在页面顶部。</p>
-      <h3>⚙️ 班委后台</h3>
+      <h3>班委后台</h3>
       <p>首页右上「班委入口」输入班委口令进入。录入（自动解析）、管理（置顶/完成/删除/顺延/回收站恢复）、建议、链接与班级信息、变更日志，一应俱全。</p>
-      <h3>🔁 同步与断网</h3>
+      <h3>同步与断网</h3>
       <p>数据库推送 + 短间隔轮询双通道，别人改完你这边秒级更新。顶部同步条显示连接状态与最后更新时间，可手动刷新。断网时保留最后一次数据，恢复后自动重连补齐。切回标签页时会立即拉取最新数据。</p>`;
     openModal('tutorialModal');
   }
@@ -809,7 +812,9 @@
     document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.classList.remove('light', 'dark');
     document.documentElement.classList.add(theme);
-    $('#themeBtn').textContent = theme === 'dark' ? '☀️' : '🌙';
+    const dark = theme === 'dark';
+    $('#themeBtn').innerHTML = icon(dark ? 'sun' : 'moon', dark ? '切换到浅色主题' : '切换到深色主题');
+    $('#themeBtn').setAttribute('aria-label', dark ? '切换到浅色主题' : '切换到深色主题');
     localStorage.setItem('buptai10_theme', theme);
   }
   function toggleTheme() {
@@ -854,7 +859,7 @@
   let syncTimer = null;
   function startSyncLoop() {
     const bar = $('#syncStatus');
-    bar.classList.remove('off'); bar.textContent = '● 实时同步已连接';
+    bar.classList.remove('off'); bar.textContent = '实时同步已连接';
     $('#syncBar').querySelector('.sync-sub').style.display = '';
     setLastUpdated();
     clearInterval(syncTimer);
@@ -871,7 +876,7 @@
           log('有人同步更新', s.title);
           save();
           if (['countdown', 'calendar', 'timeline'].includes(currentView)) render();
-          bar.textContent = '● 实时同步已连接';
+          bar.textContent = '实时同步已连接';
           setLastUpdated();
         }
       }
@@ -966,7 +971,7 @@
     // 刷新
     $('#refreshBtn').addEventListener('click', () => {
       const bar = $('#syncStatus'); bar.classList.remove('off');
-      bar.textContent = '● 实时同步已连接'; setLastUpdated();
+      bar.textContent = '实时同步已连接'; setLastUpdated();
       render(); toast('已同步最新数据');
     });
 
